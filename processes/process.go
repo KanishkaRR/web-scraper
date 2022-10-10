@@ -80,7 +80,7 @@ loop:
 		return "HTML5", nil
 	}
 
-	return "", fmt.Errorf("Unable to parse the Doctype node %q", docType)
+	return "", fmt.Errorf("Unable to parse the  Doctype node %q", docType)
 }
 
 func getFisrtLineFromWebPage(url string) (string, error) {
