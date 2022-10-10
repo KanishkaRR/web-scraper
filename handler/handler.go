@@ -1,30 +1,37 @@
 package handler
 
 import (
+	"net/http"
+
+	dto "github.com/KanishkaRR/web-scraper/dtos"
+	processer "github.com/KanishkaRR/web-scraper/processes"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
-type scraperHandler struct {
+func RegisterRoutes(router *gin.Engine) {
+	api := router.Group("/api/v1/")
+	api.POST("getUrlInformation", getAnalysisInformation)
 }
 
-func New() *scraperHandler {
-	return &scraperHandler{}
-}
+func getAnalysisInformation(c *gin.Context) {
+	req := &dto.AnalysesRequest{}
+	if err := c.BindJSON(req); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
 
-func (h *scraperHandler) RegisterRoutes(router *gin.Engine) {
-	apiV1 := router.Group("/api/v1/")
-	apiV1.GET("analyse", h.getAnalysisInformation)
-}
+	if req.WebUrl == "" {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	process := processer.NewProcessor()
+	res, err := process.ProcessWebPage(req.WebUrl)
+	if err != nil {
+		logrus.Errorf("error while trying to process the page, %v", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
-func (h *scraperHandler) getAnalysisInformation(c *gin.Context) {
-	log.Infof("Retrieving analysed Informations")
-	//res, err := h.processor.GetProcessResults(c)
-	// if err != nil {
-	// 	logrus.Error(err)
-	// 	c.AbortWithStatus(http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusAccepted, res)
 }
